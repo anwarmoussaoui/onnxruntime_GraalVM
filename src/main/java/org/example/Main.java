@@ -35,37 +35,7 @@ public class Main {
                     now: () => Date.now()
                   };
                 }
-                globalThis.Blob = function Blob(content, options) {
-                console.log("blob is used");
-                  const buffer = Buffer.from(content[0]);
-                  return { buffer };
-                };
-                
-                globalThis.URL = {
-                  createObjectURL: (blob) => {
-                    const tmpPath = '/tmp/tmp-worker.js';
-                    require('fs').writeFileSync(tmpPath, blob.buffer);
-                    return tmpPath;
-                  }
-                };
-                
                 globalThis.self = globalThis;
-                
-                globalThis.process = {
-                  env: {},         // Add your env vars here, e.g., { NODE_ENV: "production" }
-                  argv: [],
-                  cwd: () => '/',
-                  nextTick: (cb) => Promise.resolve().then(cb)
-                };
-                globalThis.fetch = async function(url) {
-                
-                  console.log("Intercepted fetch:", url);
-                  return {
-                    arrayBuffer: async () => {
-                      return new Uint8Array(modelWasmBuffer); \
-                    }
-                  };
-                };
                 """);
 
 

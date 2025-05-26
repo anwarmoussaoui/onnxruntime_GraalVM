@@ -1,7 +1,6 @@
 package org.example;
 
 import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Source;
 
 import java.io.IOException;
@@ -9,22 +8,14 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 public class Main {
 
     private static Map<String, String> getLanguageOptions() {
         Map<String, String> options = new HashMap<>();
-
-        options.put("js.ecmascript-version", "2023");
-        options.put("js.top-level-await", "true");
         options.put("js.webassembly", "true");
         options.put("js.commonjs-require", "true");
-        options.put("js.mle-mode", "true");
-        options.put("js.esm-eval-returns-exports", "true");
-        options.put("js.unhandled-rejections", "throw");
-        options.put("js.commonjs-require-cwd", Paths.get("./src/main/resources").toAbsolutePath().toString());
         return options;
     }
 
@@ -32,13 +23,7 @@ public class Main {
 
         Context context = Context.newBuilder("js","wasm")
                 .options(getLanguageOptions())
-                .allowHostAccess(HostAccess.ALL)
-                .allowIO(true)
-                .option("engine.WarnInterpreterOnly", "false")
-                .option("js.esm-eval-returns-exports", "true")
-                .option("js.unhandled-rejections", "throw")
                 .allowAllAccess(true)
-                .allowHostClassLookup(s -> true)
                 .build();
         byte[] wasmBinary  = Files.readAllBytes(Paths.get("src/main/resources/ort-wasm.wasm"));
         context.getBindings("js").putMember("modelWasmBuffer",wasmBinary);
@@ -50,8 +35,6 @@ public class Main {
                     now: () => Date.now()
                   };
                 }
-                
-                
                 globalThis.Blob = function Blob(content, options) {
                 console.log("blob is used");
                   const buffer = Buffer.from(content[0]);
@@ -83,18 +66,15 @@ public class Main {
                     }
                   };
                 };
-
-               
-                
                 """);
 
 
-        context.eval(Source.newBuilder("js",Main.class.getResource("/ort.js"))
+        context.eval(Source.newBuilder("js", Objects.requireNonNull(Main.class.getResource("/ort.js")))
                 .build());
         byte[] modelData = Files.readAllBytes(Paths.get("src/main/resources/linear_model.onnx"));
         context.getBindings("js").putMember("modelBuffer",modelData);
 
-        context.eval(Source.newBuilder("js",Main.class.getResource("/script.js"))
+        context.eval(Source.newBuilder("js", Objects.requireNonNull(Main.class.getResource("/script.js")))
                 .build());
 
     }

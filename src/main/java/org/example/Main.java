@@ -37,11 +37,9 @@ public class Main {
                 }
                 globalThis.self = globalThis;
                 """);
-
-
         context.eval(Source.newBuilder("js", Objects.requireNonNull(Main.class.getResource("/ort.js")))
                 .build());
-        byte[] modelData = Files.readAllBytes(Paths.get("src/main/resources/linear_model.onnx"));
+        byte[] modelData = Files.readAllBytes(Paths.get("src/main/resources/house_price_model.onnx"));
         context.getBindings("js").putMember("modelBuffer",modelData);
 
         context.eval(Source.newBuilder("js", Objects.requireNonNull(Main.class.getResource("/script.js")))

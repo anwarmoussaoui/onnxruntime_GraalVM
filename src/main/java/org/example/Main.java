@@ -2,24 +2,27 @@ package org.example;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Value;
+import org.graalvm.polyglot.proxy.ProxyExecutable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 public class Main {
-
     private static Map<String, String> getLanguageOptions() {
         Map<String, String> options = new HashMap<>();
         options.put("js.webassembly", "true");
         options.put("js.commonjs-require", "true");
         return options;
     }
-
     public static void main(String[] args) throws IOException {
+
 
         Context context = Context.newBuilder("js","wasm")
                 .options(getLanguageOptions())
@@ -40,10 +43,17 @@ public class Main {
         context.eval(Source.newBuilder("js", Objects.requireNonNull(Main.class.getResource("/ort.js")))
                 .build());
         byte[] modelData = Files.readAllBytes(Paths.get("src/main/resources/house_price_model.onnx"));
-        context.getBindings("js").putMember("modelBuffer",modelData);
 
         context.eval(Source.newBuilder("js", Objects.requireNonNull(Main.class.getResource("/script.js")))
                 .build());
+        Value prediction = context.getBindings("js").getMember("predict").execute(modelData);
+        prediction.invokeMember("then",(ProxyExecutable) result -> {
+
+            System.out.println("results from java side : "+result[0].getArrayElement(0).asInt());
+            return null;
+
+        });
+
 
     }
 }
